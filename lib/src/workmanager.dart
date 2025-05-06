@@ -82,9 +82,9 @@ class Workmanager {
 
   static final Workmanager _instance = Workmanager._internal(
       const MethodChannel(
-          "be.tramckrijte.workmanager/background_channel_work_manager"),
+          'be.tramckrijte.workmanager/background_channel_work_manager'),
       const MethodChannel(
-          "be.tramckrijte.workmanager/foreground_channel_work_manager"));
+          'be.tramckrijte.workmanager/foreground_channel_work_manager'));
 
   /// Use this constant inside your callbackDispatcher to identify when an iOS Background Fetch occurred.
   ///
@@ -102,7 +102,7 @@ class Workmanager {
   ///  });
   /// }
   /// ```
-  static const String iOSBackgroundTask = "iOSPerformFetch";
+  static const String iOSBackgroundTask = 'iOSPerformFetch';
 
   /// Use this constant inside your callbackDispatcher to identify when an iOS Background Processing via BGTaskScheduler occurred.
   ///
@@ -122,14 +122,14 @@ class Workmanager {
   /// ```
   @Deprecated('Use custom iOS task names. This property will be removed.')
   static const String iOSBackgroundProcessingTask =
-      "workmanager.background.task";
+      'workmanager.background.task';
 
   static bool _isInDebugMode = false;
 
   MethodChannel _backgroundChannel = const MethodChannel(
-      "be.tramckrijte.workmanager/background_channel_work_manager");
+      'be.tramckrijte.workmanager/background_channel_work_manager');
   MethodChannel _foregroundChannel = const MethodChannel(
-      "be.tramckrijte.workmanager/foreground_channel_work_manager");
+      'be.tramckrijte.workmanager/foreground_channel_work_manager');
 
   /// A helper function so you only need to implement a [BackgroundTaskHandler]
   void executeTask(final BackgroundTaskHandler backgroundTask) {
@@ -137,13 +137,14 @@ class Workmanager {
     DartPluginRegistrant.ensureInitialized();
 
     _backgroundChannel.setMethodCallHandler((call) async {
-      final inputData = call.arguments["be.tramckrijte.workmanager.INPUT_DATA"];
+      final inputData = call.arguments['be.tramckrijte.workmanager.INPUT_DATA'] as String?;
+      final task = call.arguments['be.tramckrijte.workmanager.DART_TASK'] as String;
       return backgroundTask(
-        call.arguments["be.tramckrijte.workmanager.DART_TASK"],
-        inputData == null ? null : jsonDecode(inputData),
+        task,
+        inputData == null ? null : jsonDecode(inputData) as Map<String, dynamic>,
       );
     });
-    _backgroundChannel.invokeMethod("backgroundChannelInitialized");
+    _backgroundChannel.invokeMethod('backgroundChannelInitialized');
   }
 
   /// This call is required if you wish to use the [WorkManager] plugin.
@@ -157,7 +158,7 @@ class Workmanager {
     Workmanager._isInDebugMode = isInDebugMode;
     final callback = PluginUtilities.getCallbackHandle(callbackDispatcher);
     assert(callback != null,
-        "The callbackDispatcher needs to be either a static function or a top level function to be accessible as a Flutter entry point.");
+        'The callbackDispatcher needs to be either a static function or a top level function to be accessible as a Flutter entry point.');
     if (callback != null) {
       final int handle = callback.toRawHandle();
       await _foregroundChannel.invokeMethod<void>(
@@ -205,7 +206,7 @@ class Workmanager {
     final Map<String, dynamic>? inputData,
   }) async =>
       await _foregroundChannel.invokeMethod(
-        "registerOneOffTask",
+        'registerOneOffTask',
         JsonMapperHelper.toRegisterMethodArgument(
           isInDebugMode: _isInDebugMode,
           uniqueName: uniqueName,
@@ -252,7 +253,7 @@ class Workmanager {
     final Map<String, dynamic>? inputData,
   }) async =>
       await _foregroundChannel.invokeMethod(
-        "registerPeriodicTask",
+        'registerPeriodicTask',
         JsonMapperHelper.toRegisterMethodArgument(
           isInDebugMode: _isInDebugMode,
           uniqueName: uniqueName,
@@ -291,7 +292,7 @@ class Workmanager {
     final Constraints? constraints,
   }) async =>
       await _foregroundChannel.invokeMethod(
-        "registerProcessingTask",
+        'registerProcessingTask',
         JsonMapperHelper.toRegisterMethodArgument(
           isInDebugMode: _isInDebugMode,
           uniqueName: uniqueName,
@@ -331,7 +332,7 @@ class Workmanager {
       }
     } catch (e) {
       // TODO not sure it's a good idea to handle and print a message
-      print("Could not retrieve BackgroundRefreshPermissionState " +
+      print('Could not retrieve BackgroundRefreshPermissionState ' +
           e.toString());
     }
     return BackgroundRefreshPermissionState.unknown;
@@ -340,27 +341,27 @@ class Workmanager {
   /// Cancels a task by its [uniqueName]
   Future<void> cancelByUniqueName(final String uniqueName) async =>
       await _foregroundChannel.invokeMethod(
-        "cancelTaskByUniqueName",
-        {"uniqueName": uniqueName},
+        'cancelTaskByUniqueName',
+        {'uniqueName': uniqueName},
       );
 
   /// Cancels a task by its [tag]
   Future<void> cancelByTag(final String tag) async =>
       await _foregroundChannel.invokeMethod(
-        "cancelTaskByTag",
-        {"tag": tag},
+        'cancelTaskByTag',
+        {'tag': tag},
       );
 
   /// Cancels all tasks
   Future<void> cancelAll() async =>
-      await _foregroundChannel.invokeMethod("cancelAllTasks");
+      await _foregroundChannel.invokeMethod('cancelAllTasks');
 
   /// Prints details of un-executed scheduled tasks to console. To be used during
   /// development/debugging.
   ///
   /// Currently only supported on iOS and only on iOS 13+.
   Future<void> printScheduledTasks() async =>
-      await _foregroundChannel.invokeMethod("printScheduledTasks");
+      await _foregroundChannel.invokeMethod('printScheduledTasks');
 }
 
 /// A helper object to convert the selected options to JSON format. Mainly for testability.
@@ -393,7 +394,7 @@ class JsonMapperHelper {
             value is List<double> ||
             value is List<String>)) {
           throw Exception(
-              "argument $key has wrong type. WorkManager supports only int, bool, double, String and their list");
+              'argument $key has wrong type. WorkManager supports only int, bool, double, String and their list');
         }
       }
     }
@@ -401,22 +402,22 @@ class JsonMapperHelper {
     assert(uniqueName != null);
     assert(taskName != null);
     return {
-      "isInDebugMode": isInDebugMode,
-      "uniqueName": uniqueName,
-      "taskName": taskName,
-      "tag": tag,
-      "frequency": frequency?.inSeconds,
-      "existingWorkPolicy": _enumToString(existingWorkPolicy),
-      "initialDelaySeconds": initialDelay?.inSeconds,
-      "networkType": _enumToString(constraints?.networkType),
-      "requiresBatteryNotLow": constraints?.requiresBatteryNotLow,
-      "requiresCharging": constraints?.requiresCharging,
-      "requiresDeviceIdle": constraints?.requiresDeviceIdle,
-      "requiresStorageNotLow": constraints?.requiresStorageNotLow,
-      "backoffPolicyType": _enumToString(backoffPolicy),
-      "backoffDelayInMilliseconds": backoffPolicyDelay?.inMilliseconds,
-      "outOfQuotaPolicy": _enumToString(outOfQuotaPolicy),
-      "inputData": inputData == null ? null : jsonEncode(inputData),
+      'isInDebugMode': isInDebugMode,
+      'uniqueName': uniqueName,
+      'taskName': taskName,
+      'tag': tag,
+      'frequency': frequency?.inSeconds,
+      'existingWorkPolicy': _enumToString(existingWorkPolicy),
+      'initialDelaySeconds': initialDelay?.inSeconds,
+      'networkType': _enumToString(constraints?.networkType),
+      'requiresBatteryNotLow': constraints?.requiresBatteryNotLow,
+      'requiresCharging': constraints?.requiresCharging,
+      'requiresDeviceIdle': constraints?.requiresDeviceIdle,
+      'requiresStorageNotLow': constraints?.requiresStorageNotLow,
+      'backoffPolicyType': _enumToString(backoffPolicy),
+      'backoffDelayInMilliseconds': backoffPolicyDelay?.inMilliseconds,
+      'outOfQuotaPolicy': _enumToString(outOfQuotaPolicy),
+      'inputData': inputData == null ? null : jsonEncode(inputData),
     };
   }
 
@@ -426,8 +427,8 @@ class JsonMapperHelper {
     required final int callbackHandle,
   }) {
     return {
-      "isInDebugMode": isInDebugMode,
-      "callbackHandle": callbackHandle,
+      'isInDebugMode': isInDebugMode,
+      'callbackHandle': callbackHandle,
     };
   }
 
